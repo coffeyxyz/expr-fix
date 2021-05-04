@@ -5,8 +5,8 @@
 #define TOKEN_H
 
 typedef struct token {
-	char *str;
 	unsigned char flags;
+	char *str;
 } token_t;
 
 #endif // TOKEN_H
