@@ -12,7 +12,7 @@
 #define DEFAULT_BUFFER_SIZE	3
 #define	VALID_OPERATIONS	"+-*/"
 
-rtb_buffer_t *expr_to_tokens(char *expr)
+rtb_buffer_t *string_to_tokens(char *expr)
 {
 	rtb_buffer_t *buffer = rtb_buffer_init(DEFAULT_BUFFER_SIZE);
 

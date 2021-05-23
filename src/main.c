@@ -13,7 +13,7 @@ int main(void)
 {
 	char expr[] = "1 + -1 * 2";
 
-	rtb_buffer_t *buffer = expr_to_tokens(expr);
+	rtb_buffer_t *buffer = string_to_tokens(expr);
 
 	for (size_t i = 0; i < buffer->end; ++i) {
 		if (i) printf("\n");
