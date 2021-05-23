@@ -10,7 +10,8 @@
 #include "token.h"
 
 #define DEFAULT_BUFFER_SIZE	3
-#define	VALID_OPERATIONS	"+-*/"
+#define VALID_UNARY_OPERATORS	"+-"
+#define VALID_BINARY_OPERATORS	"+-*/"
 
 rtb_buffer_t *string_to_tokens(char *expr)
 {
@@ -24,7 +25,6 @@ rtb_buffer_t *string_to_tokens(char *expr)
 
 	token_str = strtok(expr, " ");
 	while (token_str != NULL) {
-
 		token = malloc(sizeof token);
 		if (!token)
 			return NULL;
@@ -33,8 +33,10 @@ rtb_buffer_t *string_to_tokens(char *expr)
 		if (isdigit(*token_str)) {
 			token->flags |= IS_NUMBER;
 		}
-		else if (strchr(VALID_OPERATIONS, *token_str)) {
-			if (*(token_str+1) && isdigit(*(token_str+1)))
+		else if (strchr(VALID_BINARY_OPERATORS, *token_str)) {
+			if (strchr(VALID_UNARY_OPERATORS, *token_str)
+					&& *(token_str+1)
+					&& isdigit(*(token_str+1)))
 				token->flags |= IS_NUMBER;
 			else
 				token->flags |= IS_OPERATOR;
