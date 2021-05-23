@@ -1,5 +1,5 @@
 // Copyright (C) 2021 Robert Coffey
-// All rights reserved
+// Released under the GPLv2 license
 
 #ifndef LEXER_H
 #define LEXER_H
