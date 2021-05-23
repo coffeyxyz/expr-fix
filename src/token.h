@@ -8,8 +8,8 @@
 #define IS_OPERATOR (1 << 2)
 
 typedef struct token {
-	unsigned char flags;
 	char *str;
+	unsigned char flags;
 } token_t;
 
 #endif // TOKEN_H
