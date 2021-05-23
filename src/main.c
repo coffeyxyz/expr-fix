@@ -16,9 +16,9 @@ int main(void)
 	rtb_buffer_t *buffer = string_to_tokens(expr);
 
 	for (size_t i = 0; i < buffer->end; ++i) {
-		if (i) printf("\n");
 		token_t *token = (token_t *)rtb_buffer_at(buffer, i);
-		printf("STRING: %s\nFLAGS: %x\n", token->str, token->flags);
+		if (i) printf("\n");
+		printf("STRING:\t%s\nFLAGS:\t%x\n", token->str, token->flags);
 	}
 
 	return 0;
