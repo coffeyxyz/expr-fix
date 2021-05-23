@@ -4,8 +4,8 @@
 #ifndef TOKEN_H
 #define TOKEN_H
 
-#define IS_NUMBER (1 << 1)
-#define IS_OPERATOR (1 << 2)
+#define IS_NUMBER (1 << 0)
+#define IS_OPERATOR (1 << 1)
 
 typedef struct token {
 	char *str;
