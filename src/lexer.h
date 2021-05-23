@@ -15,4 +15,4 @@
  **/
 rtb_buffer_t *string_to_tokens(char *str);
 
-#endif // LEXER_H
+#endif	// LEXER_H

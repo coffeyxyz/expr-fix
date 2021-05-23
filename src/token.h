@@ -4,12 +4,12 @@
 #ifndef TOKEN_H
 #define TOKEN_H
 
-#define IS_NUMBER (1 << 0)
-#define IS_OPERATOR (1 << 1)
+#define IS_NUMBER	(unsigned char)(1)
+#define IS_OPERATOR	(unsigned char)(1 << 1)
 
 typedef struct token {
 	char *str;
 	unsigned char flags;
 } token_t;
 
-#endif // TOKEN_H
+#endif	// TOKEN_H
