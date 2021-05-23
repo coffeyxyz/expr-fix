@@ -4,15 +4,16 @@
 #ifndef LEXER_H
 #define LEXER_H
 
-#include "token.h"
+#include "rtb_buffer.h"
 
 /**
- * Convert a string into a sequence of tokens.
+ * Get the sequence of tokens contained within an expression represented
+ * by a string.
  *
- * @param str	String to be converted into tokens
+ * @param expr	String to derive tokens from
  *
  * @return rtb_buffer_t containing tokens
  **/
-rtb_buffer_t *string_to_tokens(char *str);
+rtb_buffer_t *expr_to_tokens(char *expr);
 
 #endif	// LEXER_H
