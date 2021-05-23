@@ -14,6 +14,10 @@ int main(void)
 	char expr[] = "1 + -1 * 2";
 
 	rtb_buffer_t *buffer = string_to_tokens(expr);
+	if (!buffer) {
+		fprintf(stderr, "Error: main: buffer is NULL\n");
+		return 1;
+	}
 
 	for (size_t i = 0; i < buffer->end; ++i) {
 		token_t *token = (token_t *)rtb_buffer_at(buffer, i);
