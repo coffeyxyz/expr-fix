@@ -1,4 +1,5 @@
 (import (chicken format)
+        (chicken io)
         (chicken process-context))
 
 (define (main args)
@@ -14,6 +15,12 @@
         (begin (set! input-fix (car args))
                (set! output-fix (cadr args)))))
 
-  (format #t "~A -> ~A~%" input-fix output-fix))
+  (format #t "~A -> ~A~%" input-fix output-fix)
+
+  (let repl ((i 0))
+    (format #t "~A> " i)
+    (let ((line (read-line)))
+      (format #t "-> ~A~%" line))
+    (repl (+ i 1))))
 
 (main (command-line-arguments))
