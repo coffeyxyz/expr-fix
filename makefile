@@ -1,2 +1,2 @@
 all:
-	csc -o expr-fix expr-fix.scm
+	csc -o expr-fix src/*.scm

@@ -1,5 +1,7 @@
 ;;;; lexer.scm - Mathematical expression lexer.
 
+(declare (unit lexer))
+
 (define operator-characters '(#\+ #\- #\* #\/ #\( #\)))
 
 ;; Convert a string into a token.

@@ -1,5 +1,8 @@
 ;;;; main.scm - Main function and REPL.
 
+(declare (uses lexer)
+         (uses tree))
+
 (import (chicken format)
         (chicken io)
         (chicken port)

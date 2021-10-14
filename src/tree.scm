@@ -1,5 +1,7 @@
 ;;;; tree.scm - Binary tree functions.
 
+(declare (unit tree))
+
 ;; Get the root of a binary tree.
 (define (root tree)
   (cond ((null? tree) '())
