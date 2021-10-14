@@ -27,6 +27,9 @@
   (let repl ((i 0))
     (format #t "~A> " i)
     (let ((line (read-line)))
+      (when (eof-object? line)
+        (newline)
+        (exit))
       (format #t "-> ~A~%" line))
     (repl (+ i 1))))
 
