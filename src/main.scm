@@ -1,6 +1,7 @@
 ;;;; main.scm - Main function and REPL.
 
 (declare (uses lexer)
+         (uses parser)
          (uses tree))
 
 (import (chicken format)
@@ -17,8 +18,8 @@
                            Usage: expr-fix INPUT_FIX OUTPUT_FIX~%"
                        len)
                (exit 1))
-        (begin (set! input-fix (car args))
-               (set! output-fix (cadr args)))))
+        (begin (set! input-fix (string->symbol (car args)))
+               (set! output-fix (string->symbol (cadr args))))))
 
   (format #t "~A -> ~A~%" input-fix output-fix)
 
@@ -28,7 +29,10 @@
       (when (eof-object? line)
         (newline)
         (exit))
-      (format #t "-> ~A~%" line))
+      (format #t "-> ~A~%"
+              (traverse output-fix
+                        (parse-expr input-fix
+                                    (lex-expr line)))))
     (repl (+ i 1))))
 
 (main (command-line-arguments))
