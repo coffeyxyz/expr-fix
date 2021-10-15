@@ -16,7 +16,7 @@
   (%make-tree root left right))
 
 ;; Get the string representation of a traversal of a binary tree.
-(define (traverse order tree)
+(define (traverse fix tree)
   (define (preorder tree)
     (when tree
       (format #t "~A " (tree-root tree))
@@ -37,9 +37,9 @@
 
   (let* ((str (with-output-to-string
                 (lambda ()
-                  (case order
-                    ((preorder) (preorder tree))
-                    ((inorder) (inorder tree))
-                    ((postorder) (postorder tree))))))
+                  (case fix
+                    ((prefix) (preorder tree))
+                    ((infix) (inorder tree))
+                    ((postfix) (postorder tree))))))
          (len (string-length str)))
     (substring str 0 (- len 1))))
