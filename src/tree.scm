@@ -2,46 +2,39 @@
 
 (declare (unit tree))
 
-;; Get the root of a binary tree.
-(define (root tree)
-  (cond ((null? tree) '())
-        ((list? tree) (car tree))
-        (else tree)))
+(import (chicken format)
+        (chicken port))
 
-;; Get the left branch of a binary tree.
-(define (left tree)
-  (if (or (not (list? tree))
-          (null? tree)
-          (null? (cdr tree)))
-      '()
-      (cadr tree)))
+(define-record-type tree
+  (%make-tree root left right)
+  tree?
+  (root tree-root tree-root-set!)
+  (left tree-left tree-left-set!)
+  (right tree-right tree-right-set!))
 
-;; Get the right branch of a binary tree.
-(define (right tree)
-  (if (or (not (list? tree))
-          (null? tree)
-          (null? (cdr tree))
-          (null? (cddr tree)))
-      '()
-      (caddr tree)))
+(define (make-tree #!optional root left right)
+  (%make-tree root left right))
 
 ;; Get the string representation of a traversal of a binary tree.
 (define (traverse order tree)
   (define (preorder tree)
-    (unless (null? tree)
-      (format #t "~A " (root tree))
-      (preorder (left tree))
-      (preorder (right tree))))
+    (when tree
+      (format #t "~A " (tree-root tree))
+      (preorder (tree-left tree))
+      (preorder (tree-right tree))))
+
   (define (inorder tree)
-    (unless (null? tree)
-      (inorder (left tree))
-      (format #t "~A " (root tree))
-      (inorder (right tree))))
+    (when tree
+      (inorder (tree-left tree))
+      (format #t "~A " (tree-root tree))
+      (inorder (tree-right tree))))
+
   (define (postorder tree)
-    (unless (null? tree)
-      (postorder (left tree))
-      (postorder (right tree))
-      (format #t "~A " (root tree))))
+    (when tree
+      (postorder (tree-left tree))
+      (postorder (tree-right tree))
+      (format #t "~A " (tree-root tree))))
+
   (let* ((str (with-output-to-string
                 (lambda ()
                   (case order
@@ -49,6 +42,4 @@
                     ((inorder) (inorder tree))
                     ((postorder) (postorder tree))))))
          (len (string-length str)))
-    (if (> len 0)
-        (substring str 0 (- len 1))
-        str)))
+    (substring str 0 (- len 1))))

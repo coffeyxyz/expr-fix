@@ -5,9 +5,7 @@
 
 (import (chicken format)
         (chicken io)
-        (chicken port)
-        (chicken process-context)
-        (chicken string))
+        (chicken process-context))
 
 (define (main args)
   (define input-fix)

@@ -2,6 +2,8 @@
 
 (declare (unit lexer))
 
+(import (chicken string))
+
 (define operator-characters '(#\+ #\- #\* #\/ #\( #\)))
 
 ;; Convert a string into a token.
