@@ -25,6 +25,10 @@
   ;;(define (infix tokens)
   ;;  )
 
+  ;; TODO Fix this! I was too eager to get coding and didn't think this the full
+  ;; way through. This works for expressions like "1 2 +", "1 2 * 3 4 / +", and
+  ;; "1 2 + 3 +", but not "1 2 3 4 + + +". Just going to use a stack instead of
+  ;; this two subtree thing.
   (define (postfix tokens)
     (define left #f)
     (define right #f)
