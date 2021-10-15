@@ -1,4 +1,4 @@
-;;;; tree.scm - Binary tree functions.
+;;;; tree.scm - Binary tree data type.
 
 (declare (unit tree))
 
