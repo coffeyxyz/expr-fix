@@ -30,5 +30,5 @@
   (eq? 'number (token-type token)))
 
 ;; Get a list of the tokens contained within an expression string.
-(define (lex-expr expr)
-  (map string->token (string-split expr)))
+(define (lex-xpr xpr)
+  (map string->token (string-split xpr)))

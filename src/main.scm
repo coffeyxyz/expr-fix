@@ -14,8 +14,8 @@
 
   (let ((len (length args)))
     (if (not (= len 2))
-        (begin (format #t "expr-fix: Invalid argument count: ~A~%~
-                           Usage: expr-fix INPUT_FIX OUTPUT_FIX~%"
+        (begin (format #t "xpr-fix: Invalid argument count: ~A~%~
+                           Usage: xpr-fix INPUT_FIX OUTPUT_FIX~%"
                        len)
                (exit 1))
         (begin (set! input-fix (string->symbol (car args)))
@@ -31,8 +31,8 @@
         (exit))
       (format #t "-> ~A~%"
               (traverse output-fix
-                        (parse-expr input-fix
-                                    (lex-expr line)))))
+                        (parse-xpr input-fix
+                                   (lex-xpr line)))))
     (repl (+ i 1))))
 
 (main (command-line-arguments))

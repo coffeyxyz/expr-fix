@@ -5,7 +5,7 @@
          (uses tree))
 
 ;; Convert a list of tokens into a parse tree.
-(define (parse-expr fix tokens)
+(define (parse-xpr fix tokens)
   (define (prefix tokens)
     (make-tree (let ((token (car tokens)))
                  (set! (car tokens) #f)
@@ -50,7 +50,7 @@
     (if (and (= (stack-length stack) 1)
              (tree? (stack-top stack)))
         (stack-top stack)
-        (error "parse-expr: postfix: Invalid expression")))
+        (error "parse-xpr: postfix: Invalid expression")))
 
   (if (and (= (length tokens) 1)
            (eq? (token-type (car tokens)) 'number))
