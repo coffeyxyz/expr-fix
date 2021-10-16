@@ -1,6 +1,8 @@
 ;;;; parser.scm - Mathematical expression parser.
 
-(declare (unit parser))
+(declare (unit parser)
+         (uses stack)
+         (uses tree))
 
 ;; Convert a list of tokens into a parse tree.
 (define (parse-expr fix tokens)
@@ -25,39 +27,30 @@
   ;;(define (infix tokens)
   ;;  )
 
-  ;; TODO Fix this! I was too eager to get coding and didn't think this the full
-  ;; way through. This works for expressions like "1 2 +", "1 2 * 3 4 / +", and
-  ;; "1 2 + 3 +", but not "1 2 3 4 + + +". Just going to use a stack instead of
-  ;; this two subtree thing.
   (define (postfix tokens)
-    (define left #f)
-    (define right #f)
-    (define subtree1 #f)
-    (define subtree2 #f)
+    (define stack (make-stack '()))
     (let loop ((tokens tokens))
       (unless (null? tokens)
         (let ((token (car tokens)))
-          (cond ((and subtree1 subtree2)
-                 (begin (set! subtree1 (make-tree (token-value token)
-                                                  subtree1 subtree2))
-                        (set! subtree2 #f)))
-                ((and subtree1 left right)
-                 (begin (set! subtree2 (make-tree (token-value token)
-                                                  left right))
-                        (set! left #f)
-                        (set! right #f)))
-                ((and subtree1 left (token-operator? token))
-                 (begin (set! subtree1 (make-tree (token-value token)
-                                                  subtree1 left))
-                        (set! left #f)))
-                ((not left) (set! left (make-tree (token-value token))))
-                ((not right) (set! right (make-tree (token-value token))))
-                (else (begin (set! subtree1 (make-tree (token-value token)
-                                                       left right))
-                             (set! left #f)
-                             (set! right #f)))))
-        (loop (cdr tokens)))
-      subtree1))
+          (if (token-operator? token)
+              (let* ((left-element (stack-top-n stack 1))
+                     (right-element (stack-top-n stack 0))
+                     (left-tree (if (tree? left-element)
+                                    left-element
+                                    (make-tree left-element)))
+                     (right-tree (if (tree? right-element)
+                                     right-element
+                                     (make-tree right-element))))
+                (set! stack (stack-pop-n stack 2))
+                (set! stack (stack-push stack
+                                        (make-tree (token-value token)
+                                                   left-tree right-tree))))
+              (set! stack (stack-push stack (token-value token)))))
+        (loop (cdr tokens))))
+    (if (and (= (stack-length stack) 1)
+             (tree? (stack-top stack)))
+        (stack-top stack)
+        (error "parse-expr: postfix: Invalid expression")))
 
   (if (and (= (length tokens) 1)
            (eq? (token-type (car tokens)) 'number))
