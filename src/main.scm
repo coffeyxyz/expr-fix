@@ -8,31 +8,28 @@
         (chicken io)
         (chicken process-context))
 
+(define (parse-fix-arg arg)
+  (cond ((or (string=? arg "pre")
+             (string=? arg "prefix"))
+         'prefix)
+        ((or (string=? arg "in")
+             (string=? arg "infix"))
+         'infix)
+        ((or (string=? arg "post")
+             (string=? arg "postfix"))
+         'postfix)
+        (else (format #t "xpr-fix: Invalid fix argument: ~A~%" arg)
+              (exit 1))))
+
 (define (main args)
-  (define input-fix)
-  (define output-fix)
-
-  (let ((len (length args)))
-    (if (not (= len 2))
-        (begin (format #t "xpr-fix: Invalid argument count: ~A~%~
-                           Usage: xpr-fix INPUT_FIX OUTPUT_FIX~%"
-                       len)
-               (exit 1))
-        (begin (set! input-fix (string->symbol (car args)))
-               (set! output-fix (string->symbol (cadr args))))))
-
-  (format #t "~A -> ~A~%" input-fix output-fix)
-
-  (let repl ((i 0))
-    (format #t "~A> " i)
-    (let ((line (read-line)))
-      (when (eof-object? line)
-        (newline)
-        (exit))
-      (format #t "-> ~A~%"
-              (traverse output-fix
-                        (parse-xpr input-fix
-                                   (lex-xpr line)))))
-    (repl (+ i 1))))
+  (unless (= (length args) 3)
+    (format #t "xpr-fix: Invalid argument count: ~A~%~
+                Usage: xpr-fix INPUT_FIX OUTPUT_FIX EXPRESSION~%"
+            (length args))
+    (exit 1))
+  (format #t "~A~%"
+          (traverse (parse-fix-arg (cadr args))
+                    (parse-xpr (parse-fix-arg (car args))
+                               (lex-xpr (caddr args))))))
 
 (main (command-line-arguments))
