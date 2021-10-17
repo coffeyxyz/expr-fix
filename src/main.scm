@@ -5,7 +5,6 @@
          (uses tree))
 
 (import (chicken format)
-        (chicken io)
         (chicken process-context))
 
 (define (parse-fix-arg arg)
