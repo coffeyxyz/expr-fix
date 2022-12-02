@@ -20,7 +20,8 @@
 ;;------------------------------------------------------------------------------
 
 (import (chicken format)
-        (chicken io))
+        (chicken io)
+        (chicken string))
 
 ;; token -----------------------------------------------------------------------
 ;;
@@ -68,56 +69,81 @@
 
 ;; parser ----------------------------------------------------------------------
 
-(define (parse-num tok)
-  (if (match? tok 'n)
-      (tok-v tok)
-      (error 'parse-num "failed to parse number" tok)))
+(define tok-head)
+(define tok-tail)
 
-(define (parse-op tok)
-  (if (match? tok 'o)
-      (tok-v tok)
-      (error 'parse-op "failed to parse operator" tok)))
+(define (init! tok-lst)
+  (set! tok-tail tok-lst)
+  (consume!))
 
-(define tok-curr)
-(define tok-rest)
+(define (consume!)
+  (if (null? tok-tail)
+      (set! tok-head #f)
+      (begin (set! tok-head (car tok-tail))
+             (set! tok-tail (cdr tok-tail)))))
 
-(define (match? tok type)
-  (eq? (tok-t tok) type))
+(define (next) tok-head)
+(define (done?) (not (next)))
+(define (match? type) (eq? (tok-t (next)) type))
 
-(define (next!)
-  (if (null? tok-rest)
-      #f
-      (begin (set! tok-curr (car tok-rest))
-             (set! tok-rest (cdr tok-rest))
-             #t)))
+(define (expect! type)
+  (if (match? type)
+      (consume!)
+      (error 'expect!
+             (printf "token type mismatch\n  expected: ~A\n  received: ~A\n"
+                     type (tok-t (next))))))
 
+(define (parse-num!)
+  (if (match? 'n)
+      (let ((tok (next)))
+        (consume!)
+        (tok-v tok))
+      (error 'parse-num! "failed to parse number" (next))))
+
+(define (parse-op!)
+  (if (match? 'o)
+      (let ((tok (next)))
+        (consume!)
+        (tok-v tok))
+      (error 'parse-op! "failed to parse operator" (next))))
+
+;; Recursive descent parser for the following grammar:
+;;
+;;     E -> N | O E E
+;;
 (define (parse-prefix line)
   (define (parse-expr!)
-    (unless (next!) (error 'parse-expr! "missing tokens"))
-    (cond ((match? tok-curr 'n) (parse-num tok-curr))
-          ((match? tok-curr 'o) (list (parse-op tok-curr)
-                                      (parse-expr!)
-                                      (parse-expr!)))
-          (else (error 'parse-expr! "invalid token" tok-curr))))
-  (set! tok-rest (lex-line line))
+    (cond ((done?) (error 'parse-expr! "missing tokens"))
+          ((match? 'n) (parse-num!))
+          ((match? 'o) (list (parse-op!)
+                             (parse-expr!)
+                             (parse-expr!)))
+          (else (error 'parse-expr! "invalid token" (next)))))
+  (init! (lex-line line))
   (let ((tree (parse-expr!)))
-    (if (null? tok-rest)
+    (if (done?)
         tree
-        (error 'parse-prefix "unparsed tokens remain"))))
+        (error 'parse-prefix "too many tokens"))))
 
+;; Stack automaton parser for the following grammar:
+;;
+;;     E -> N | E E O
+;;
 (define (parse-postfix line)
   (define stk '())
   (define (parse-expr!)
-    (when (next!)
-      (cond ((match? tok-curr 'n) (set! stk (cons (parse-num tok-curr) stk)))
-            ((match? tok-curr 'o)
+    (unless (done?)
+      (cond ((match? 'n) (set! stk (cons (parse-num!) stk)))
+            ((match? 'o)
              (if (or (null? stk) (null? (cdr stk)))
-                 (error 'parse-expr! "missing arguments" (tok-v tok-curr))
-                 (set! stk (cons (list (tok-v tok-curr) (cadr stk) (car stk))
+                 (error 'parse-expr! "missing arguments" (tok-v (next)))
+                 (set! stk (cons (list (parse-op!)
+                                       (cadr stk)
+                                       (car stk))
                                  (cddr stk)))))
-            (else (error 'parse-expr! "invalid token" tok-curr)))
+            (else (error 'parse-expr! "invalid token" (next))))
       (parse-expr!)))
-  (set! tok-rest (lex-line line))
+  (init! (lex-line line))
   (parse-expr!)
   (cond ((null? stk) (error 'parse-postfix "missing tokens"))
         ((not (null? (cdr stk))) (error 'parse-postfix "too many tokens"))
