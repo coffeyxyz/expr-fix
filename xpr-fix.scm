@@ -4,18 +4,10 @@
 
 ;; Grammars --------------------------------------------------------------------
 ;;
-;;     N -> ['+', '-']? ['0' - '9']+
+;; For all grammars, the following symbols are defined:
+;;
+;;     N -> ['+', '-']?['0' - '9']+
 ;;     O -> '+' | '-' | '*' | '/'
-;;
-;; Prefix
-;;
-;;     E -> N | O ' ' E ' ' E
-;;
-;; Postfix
-;;
-;;     I tried to find an LL grammar... just going to use a stack automaton.
-;;
-;; Infix
 ;;
 ;;------------------------------------------------------------------------------
 
@@ -148,6 +140,32 @@
   (cond ((null? stk) (error 'parse-postfix "missing tokens"))
         ((not (null? (cdr stk))) (error 'parse-postfix "too many tokens"))
         (else (car stk))))
+
+;; Recursive descent parser for the following grammar:
+;;
+;;     E -> N R
+;;     R -> e | O E
+;;
+;; RNN: Right-Associative No-Precedence No-Parenthesis
+(define (parse-infix-rnn line)
+  (define (E!)
+    (cond ((done?) (error 'E! "missing tokens"))
+          ((match? 'n)
+           (let* ((left (parse-num!))
+                  (right (R!)))
+             (if (not right)
+                 left
+                 (list (car right) left (cadr right)))))
+          (else (error 'E! "invalid token" (next)))))
+  (define (R!)
+    (cond ((done?) #f)
+          ((match? 'o) (list (parse-op!) (E!)))
+          (else (error 'R! "invalid token" (next)))))
+  (init! (lex-line line))
+  (let ((tree (E!)))
+    (if (done?)
+        tree
+        (error 'parse-infix-rnn "too many tokens"))))
 
 ;; main ------------------------------------------------------------------------
 
