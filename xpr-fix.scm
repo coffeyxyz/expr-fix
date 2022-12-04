@@ -6,8 +6,8 @@
 ;;
 ;; For all grammars, the following symbols are defined:
 ;;
-;;     N -> ['+', '-']?['0' - '9']+
-;;     O -> '+' | '-' | '*' | '/'
+;;     N -> [+,-]?[0-9]+
+;;     O -> + | - | * | /
 ;;
 ;;------------------------------------------------------------------------------
 
@@ -76,24 +76,25 @@
 
 (define (next) tok-head)
 (define (done?) (not (next)))
-(define (match? type) (eq? (tok-t (next)) type))
+(define (match-type? type) (eq? (tok-t (next)) type))
+(define (match-value? value) (eqv? (tok-v (next)) value))
 
 (define (expect! type)
-  (if (match? type)
+  (if (match-type? type)
       (consume!)
       (error 'expect!
              (printf "token type mismatch\n  expected: ~A\n  received: ~A\n"
                      type (tok-t (next))))))
 
 (define (parse-num!)
-  (if (match? 'n)
+  (if (match-type? 'n)
       (let ((tok (next)))
         (consume!)
         (tok-v tok))
       (error 'parse-num! "failed to parse number" (next))))
 
 (define (parse-op!)
-  (if (match? 'o)
+  (if (match-type? 'o)
       (let ((tok (next)))
         (consume!)
         (tok-v tok))
@@ -106,8 +107,8 @@
 (define (parse-prefix line)
   (define (parse-expr!)
     (cond ((done?) (error 'parse-expr! "missing tokens"))
-          ((match? 'n) (parse-num!))
-          ((match? 'o) (list (parse-op!)
+          ((match-type? 'n) (parse-num!))
+          ((match-type? 'o) (list (parse-op!)
                              (parse-expr!)
                              (parse-expr!)))
           (else (error 'parse-expr! "invalid token" (next)))))
@@ -125,8 +126,8 @@
   (define stk '())
   (define (parse-expr!)
     (unless (done?)
-      (cond ((match? 'n) (set! stk (cons (parse-num!) stk)))
-            ((match? 'o)
+      (cond ((match-type? 'n) (set! stk (cons (parse-num!) stk)))
+            ((match-type? 'o)
              (if (or (null? stk) (null? (cdr stk)))
                  (error 'parse-expr! "missing arguments" (tok-v (next)))
                  (set! stk (cons (list (parse-op!)
@@ -150,7 +151,7 @@
 (define (parse-infix-rnn line)
   (define (E!)
     (cond ((done?) (error 'E! "missing tokens"))
-          ((match? 'n)
+          ((match-type? 'n)
            (let* ((left (parse-num!))
                   (right (R!)))
              (if (not right)
@@ -159,7 +160,7 @@
           (else (error 'E! "invalid token" (next)))))
   (define (R!)
     (cond ((done?) #f)
-          ((match? 'o) (list (parse-op!) (E!)))
+          ((match-type? 'o) (list (parse-op!) (E!)))
           (else (error 'R! "invalid token" (next)))))
   (init! (lex-line line))
   (let ((tree (E!)))
@@ -167,6 +168,35 @@
         tree
         (error 'parse-infix-rnn "too many tokens"))))
 
+;; Recursive descent parser for the following grammar:
+;;
+;;     EXPR -> TERM | TERM + EXPR
+;;     TERM -> PROD | PROD * TERM
+;;     PROD -> NUM
+;;
+;; RPN: Right-Associative Precedence No-Parenthesis
+(define (parse-infix-rpn line)
+  (define (EXPR!)
+    (cond ((done?) (error 'EXPR! "missing tokens"))
+          (else (let ((term (TERM!)))
+                  (cond ((done?) term)
+                        ((match-value? '+) (consume!) (list + term (EXPR!)))
+                        (else (error 'EXPR! "invalid token" (next))))))))
+  (define (TERM!)
+    (cond ((done?) (error 'TERM! "missing tokens"))
+          (else (let ((prod (PROD!)))
+                  (cond ((done?) prod)
+                        ((match-value? '*) (consume!) (list * prod (TERM!)))
+                        (else prod))))))
+  (define (PROD!)
+    (cond ((done?) (error 'PROD! "missing tokens" (next)))
+          ((match-type? 'n) (parse-num!))
+          (else (error 'PROD! "invalid token" (next)))))
+  (init! (lex-line line))
+  (let ((tree (EXPR!)))
+    (if (done?)
+        tree
+        (error 'parse-infix-lpn "too many tokens"))))
 ;; main ------------------------------------------------------------------------
 
 ;;(define (main)
