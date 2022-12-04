@@ -170,8 +170,8 @@
 
 ;; Recursive descent parser for the following grammar:
 ;;
-;;     EXPR -> TERM | TERM + EXPR
-;;     TERM -> PROD | PROD * TERM
+;;     EXPR -> TERM | TERM [+,-] EXPR
+;;     TERM -> PROD | PROD [*,/] TERM
 ;;     PROD -> NUM
 ;;
 ;; RPN: Right-Associative Precedence No-Parenthesis
@@ -180,13 +180,19 @@
     (cond ((done?) (error 'EXPR! "missing tokens"))
           (else (let ((term (TERM!)))
                   (cond ((done?) term)
-                        ((match-value? '+) (consume!) (list + term (EXPR!)))
+                        ((or (match-value? '+)
+                             (match-value? '-))
+                         (let ((op (parse-op!)))
+                           (list op term (EXPR!))))
                         (else (error 'EXPR! "invalid token" (next))))))))
   (define (TERM!)
     (cond ((done?) (error 'TERM! "missing tokens"))
           (else (let ((prod (PROD!)))
                   (cond ((done?) prod)
-                        ((match-value? '*) (consume!) (list * prod (TERM!)))
+                        ((or (match-value? '*)
+                             (match-value? '/))
+                         (let ((op (parse-op!)))
+                           (list op prod (TERM!))))
                         (else prod))))))
   (define (PROD!)
     (cond ((done?) (error 'PROD! "missing tokens" (next)))
