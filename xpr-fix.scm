@@ -179,8 +179,8 @@
 ;; LL(1) recursive descent parser for the following grammar:
 ;;
 ;;     EXPR -> TERM | TERM [+,-] EXPR
-;;     TERM -> PROD | PROD [*,/] TERM
-;;     PROD -> NUM
+;;     TERM -> FACT | FACT [*,/] TERM
+;;     FACT -> NUM
 ;;
 ;; RPN: Right-Associative Precedence No-Parenthesis
 (define (parse-infix-rpn line)
@@ -195,17 +195,17 @@
                         (else (error 'EXPR! "invalid token" (next))))))))
   (define (TERM!)
     (cond ((done?) (error 'TERM! "missing tokens"))
-          (else (let ((prod (PROD!)))
-                  (cond ((done?) prod)
+          (else (let ((fact (FACT!)))
+                  (cond ((done?) fact)
                         ((or (match-value? '*)
                              (match-value? '/))
                          (let ((op (parse-op!)))
-                           (list op prod (TERM!))))
-                        (else prod))))))
-  (define (PROD!)
-    (cond ((done?) (error 'PROD! "missing tokens" (next)))
+                           (list op fact (TERM!))))
+                        (else fact))))))
+  (define (FACT!)
+    (cond ((done?) (error 'FACT! "missing tokens" (next)))
           ((match-type? 'n) (parse-num!))
-          (else (error 'PROD! "invalid token" (next)))))
+          (else (error 'FACT! "invalid token" (next)))))
   (init! (lex-line line))
   (let ((tree (EXPR!)))
     (if (done?)
@@ -216,9 +216,9 @@
 ;;
 ;;     E  -> EL T
 ;;     EL -> e | EL T [+,-]
-;;     T  -> TL P
-;;     TL -> e | TL P [*,/]
-;;     P  -> NUM
+;;     T  -> TL F
+;;     TL -> e | TL F [*,/]
+;;     F  -> NUM
 ;;
 ;; LPN: Left-Associative Precedence No-Parenthesis
 (define (parse-infix-lpn line)
@@ -240,24 +240,24 @@
           (else #f)))
   (define (T!)
     (cond ((done?) (error 'T! "missing tokens"))
-          (else (let* ((p (P!))
+          (else (let* ((f (F!))
                        (tl (TL!)))
-                  (if (not tl) p (list (car tl) p (cadr tl)))))))
+                  (if (not tl) f (list (car tl) f (cadr tl)))))))
   (define (TL!)
     (cond ((done?) #f)
           ((or (match-value? '*)
                (match-value? '/))
            (let* ((op (parse-op!))
-                  (p (P!))
+                  (f (F!))
                   (tl (TL!)))
              (if (not tl)
-                 (list op p)
-                 (list op (list (car tl) p (cadr tl))))))
+                 (list op f)
+                 (list op (list (car tl) f (cadr tl))))))
           (else #f)))
-  (define (P!)
-    (cond ((done?) (error 'P! "missing tokens"))
+  (define (F!)
+    (cond ((done?) (error 'F! "missing tokens"))
           ((match-type? 'n) (parse-num!))
-          (else (error 'P! "invalid token" (next)))))
+          (else (error 'F! "invalid token" (next)))))
   (init! (reverse (lex-line line)))
   (let ((tree (E!)))
     (if (done?)
