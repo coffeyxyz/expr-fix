@@ -15,6 +15,14 @@
         (chicken io)
         (chicken string))
 
+;; misc ------------------------------------------------------------------------
+
+(define (tree-invert tree)
+  (cond ((list? tree) (list (car tree)
+                            (tree-invert (caddr tree))
+                            (tree-invert (cadr tree))))
+        (else tree)))
+
 ;; token -----------------------------------------------------------------------
 ;;
 ;; token types: 'n (number), 'o (operation), 'p (parenthesis)
@@ -100,7 +108,7 @@
         (tok-v tok))
       (error 'parse-op! "failed to parse operator" (next))))
 
-;; Recursive descent parser for the following grammar:
+;; LL(1) recursive descent parser for the following grammar:
 ;;
 ;;     E -> N | O E E
 ;;
@@ -142,7 +150,7 @@
         ((not (null? (cdr stk))) (error 'parse-postfix "too many tokens"))
         (else (car stk))))
 
-;; Recursive descent parser for the following grammar:
+;; LL(1) recursive descent parser for the following grammar:
 ;;
 ;;     E -> N R
 ;;     R -> e | O E
@@ -168,7 +176,7 @@
         tree
         (error 'parse-infix-rnn "too many tokens"))))
 
-;; Recursive descent parser for the following grammar:
+;; LL(1) recursive descent parser for the following grammar:
 ;;
 ;;     EXPR -> TERM | TERM [+,-] EXPR
 ;;     TERM -> PROD | PROD [*,/] TERM
@@ -202,7 +210,60 @@
   (let ((tree (EXPR!)))
     (if (done?)
         tree
+        (error 'parse-infix-rpn "too many tokens"))))
+
+;; RR(1) recursive descent parser for grammar:
+;;
+;;     E  -> EL T
+;;     EL -> e | EL T [+,-]
+;;     T  -> TL P
+;;     TL -> e | TL P [*,/]
+;;     P  -> NUM
+;;
+;; LPN: Left-Associative Precedence No-Parenthesis
+(define (parse-infix-lpn line)
+  (define (E!)
+    (cond ((done?) (error 'E! "missing tokens"))
+          (else (let* ((t (T!))
+                       (el (EL!)))
+                  (if (not el) t (list (car el) t (cadr el)))))))
+  (define (EL!)
+    (cond ((done?) #f)
+          ((or (match-value? '+)
+               (match-value? '-))
+           (let* ((op (parse-op!))
+                  (t (T!))
+                  (el (EL!)))
+             (if (not el)
+                 (list op t)
+                 (list op (list (car el) t (cadr el))))))
+          (else #f)))
+  (define (T!)
+    (cond ((done?) (error 'T! "missing tokens"))
+          (else (let* ((p (P!))
+                       (tl (TL!)))
+                  (if (not tl) p (list (car tl) p (cadr tl)))))))
+  (define (TL!)
+    (cond ((done?) #f)
+          ((or (match-value? '*)
+               (match-value? '/))
+           (let* ((op (parse-op!))
+                  (p (P!))
+                  (tl (TL!)))
+             (if (not tl)
+                 (list op p)
+                 (list op (list (car tl) p (cadr tl))))))
+          (else #f)))
+  (define (P!)
+    (cond ((done?) (error 'P! "missing tokens"))
+          ((match-type? 'n) (parse-num!))
+          (else (error 'P! "invalid token" (next)))))
+  (init! (reverse (lex-line line)))
+  (let ((tree (E!)))
+    (if (done?)
+        (tree-invert tree)
         (error 'parse-infix-lpn "too many tokens"))))
+
 ;; main ------------------------------------------------------------------------
 
 ;;(define (main)
