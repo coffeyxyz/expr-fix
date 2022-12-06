@@ -1,6 +1,6 @@
 # xpr-fix
 
-Convert mathematical expressions between prefix, infix, and postfix.
+Parsers for prefix, infix, and postfix mathematical expressions.
 
 ## License
 
