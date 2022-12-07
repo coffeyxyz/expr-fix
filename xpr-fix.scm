@@ -13,15 +13,29 @@
 
 (import (chicken format)
         (chicken io)
+        (chicken process-context)
         string-tokenize)
+
+;; string ----------------------------------------------------------------------
+
+(define (string-downcase str)
+  (define len (string-length str))
+  (if (zero? len)
+      ""
+      (let ((out (make-string len)))
+        (do ((i 0 (+ i 1)))
+            ((= i len))
+          (string-set! out i (char-downcase (string-ref str i))))
+        out)))
 
 ;; tree ------------------------------------------------------------------------
 
 (define (tree-invert tree)
-  (cond ((list? tree) (list (car tree)
-                            (tree-invert (caddr tree))
-                            (tree-invert (cadr tree))))
-        (else tree)))
+  (if (not (list? tree))
+      tree
+      (list (car tree)
+            (tree-invert (caddr tree))
+            (tree-invert (cadr tree)))))
 
 ;; token -----------------------------------------------------------------------
 ;;
@@ -281,5 +295,15 @@
 
 ;; main ------------------------------------------------------------------------
 
-;;(define (main)
-;;  )
+(define (main fix expr)
+  (define parser
+    (cond
+     ((member fix '("pre" "prefix")) parse-prefix)
+     ((member fix '("in" "infix")) parse-infix-lpp)
+     ((member fix '("post" "postfix")) parse-postfix)))
+  (print (parser expr)))
+
+(let* ((args (command-line-arguments))
+       (argc (length args)))
+  (unless (= argc 2) (error 'args "invalid number of arguments"))
+  (main (string-downcase (car args)) (cadr args)))
