@@ -1,4 +1,13 @@
 ;; xpr-fix.scm - xpr-fix in CHICKEN Scheme
+;;
+;; USAGE
+;;     csc -o xpr-fix xpr-fix.scm
+;;     ./xpr-fix FIX EXPR
+;; where: FIX = prefix | infix | postfix
+;;
+;; DEPENDS
+;; - string-tokenize: <github.com/foggynight/string-tokenize-egg>
+;;
 ;; Copyright (C) 2022 Robert Coffey
 ;; Released under the MIT license.
 
