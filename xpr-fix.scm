@@ -6,16 +6,16 @@
 ;;
 ;; For all grammars, the following symbols are defined:
 ;;
-;;     N -> [+,-]?[0-9]+
+;;     N -> [0-9]+
 ;;     O -> + | - | * | /
 ;;
 ;;------------------------------------------------------------------------------
 
 (import (chicken format)
         (chicken io)
-        (chicken string))
+        string-tokenize)
 
-;; misc ------------------------------------------------------------------------
+;; tree ------------------------------------------------------------------------
 
 (define (tree-invert tree)
   (cond ((list? tree) (list (car tree)
@@ -38,7 +38,7 @@
 
 (define (make-token t #!optional (v (void)))
   (cond ((not (symbol? t)) (error 'make-token "type must be a symbol" t))
-        ((not (memq t '(n o p))) (error 'make-token "invalid token type" t))
+        ((not (memq t '(n o lp rp))) (error 'make-token "invalid token type" t))
         (else (%make-token t v))))
 
 ;; lexer -----------------------------------------------------------------------
@@ -53,19 +53,27 @@
       (make-token 'o (string->symbol word))
       #f))
 
+(define (lex-paren word)
+  (cond ((not (= (string-length word) 1)) #f)
+        ((char=? (string-ref word 0) #\() (make-token 'lp word))
+        ((char=? (string-ref word 0) #\)) (make-token 'rp word))
+        (else #f)))
+
 (define (lex-line line)
   (define (lex-words words)
-    (if (null? words)
-        '()
-        (let* ((word (car words))
-               (num (lex-num word)))
-          (if num
-              (cons num (lex-words (cdr words)))
-              (let ((op (lex-op word)))
-                (if op
-                    (cons op (lex-words (cdr words)))
-                    (error 'lex-line "invalid token" word)))))))
-  (lex-words (string-split line)))
+    (define tokens '())
+    (define tok)
+    (let loop ((w words))
+      (cond ((null? w) (set! tok #f))
+            ((begin (set! tok (lex-num (car w))) tok))
+            ((begin (set! tok (lex-op (car w))) tok))
+            ((begin (set! tok (lex-paren (car w))) tok))
+            (else (error 'lex-line "invalid token" word)))
+      (if (not tok)
+          (reverse tokens)
+          (begin (set! tokens (cons tok tokens))
+                 (loop (cdr w))))))
+  (lex-words (string-tokenize line " \t\n" "+-*/()")))
 
 ;; parser ----------------------------------------------------------------------
 
@@ -117,8 +125,8 @@
     (cond ((done?) (error 'parse-expr! "missing tokens"))
           ((match-type? 'n) (parse-num!))
           ((match-type? 'o) (list (parse-op!)
-                             (parse-expr!)
-                             (parse-expr!)))
+                                  (parse-expr!)
+                                  (parse-expr!)))
           (else (error 'parse-expr! "invalid token" (next)))))
   (init! (lex-line line))
   (let ((tree (parse-expr!)))
@@ -218,10 +226,10 @@
 ;;     EL -> e | EL T [+,-]
 ;;     T  -> TL F
 ;;     TL -> e | TL F [*,/]
-;;     F  -> NUM
+;;     F  -> NUM | ( E )
 ;;
-;; LPN: Left-Associative Precedence No-Parenthesis
-(define (parse-infix-lpn line)
+;; LPP: Left-Associative Precedence Parenthesis
+(define (parse-infix-lpp line)
   (define (E!)
     (cond ((done?) (error 'E! "missing tokens"))
           (else (let* ((t (T!))
@@ -257,12 +265,19 @@
   (define (F!)
     (cond ((done?) (error 'F! "missing tokens"))
           ((match-type? 'n) (parse-num!))
+          ((match-type? 'rp)
+           (consume!)
+           (let ((e (E!)))
+             (if (match-type? 'lp)
+                 (begin (consume!) e)
+                 (error 'F! "missing open bracket"))))
+          ((match-type? 'lp) (error 'F! "invalid open bracket"))
           (else (error 'F! "invalid token" (next)))))
   (init! (reverse (lex-line line)))
   (let ((tree (E!)))
     (if (done?)
         (tree-invert tree)
-        (error 'parse-infix-lpn "too many tokens"))))
+        (error 'parse-infix-lpp "too many tokens"))))
 
 ;; main ------------------------------------------------------------------------
 
