@@ -7,6 +7,7 @@
 
 import Control.Applicative
 import Data.Char
+import System.Environment
 
 newtype Parser a = P (String -> [(a, String)])
 
@@ -142,3 +143,19 @@ inP =
      char '('
      return e
    <|> num
+
+-- main ------------------------------------------------------------------------
+
+main :: IO ()
+main =
+  do args <- getArgs
+     let out = case args of
+                 ["prefix", expr]  -> parse preE expr
+                 ["infix", expr]   -> parse inE expr
+                 ["postfix", expr] -> parse postE expr
+                 otherwise         -> [("", ""), ("", "")]
+     putStrLn $ case out of
+                  []            -> "error: failed to parse input"
+                  [x, y]        -> "error: invalid arguments"
+                  [(str, "")]   -> str
+                  [(str, rest)] -> "error: unparsed input remains"
