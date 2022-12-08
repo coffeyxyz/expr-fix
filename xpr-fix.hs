@@ -108,9 +108,9 @@ postE' =
 
 -- Infix RR --------------------------------------------------------------------
 --
---   E -> T | E [+,-] T
---   T -> P | T [*,/] P
---   P -> N | ( E )
+--   E -> E [+,-] T | T
+--   T -> T [*,/] P | P
+--   P -> ( E ) | N
 
 inE :: Parser String
 inE = P (\inp -> parse inE' $ reverse inp)

@@ -246,10 +246,10 @@
 ;; RR(1) recursive descent parser for grammar:
 ;;
 ;;     E  -> EL T
-;;     EL -> e | EL T [+,-]
+;;     EL -> EL T [+,-] | e
 ;;     T  -> TL F
-;;     TL -> e | TL F [*,/]
-;;     F  -> NUM | ( E )
+;;     TL -> TL F [*,/] | e
+;;     F  -> ( E ) | NUM
 ;;
 ;; LPP: Left-Associative Precedence Parenthesis
 (define (parse-infix-lpp line)
