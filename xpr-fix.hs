@@ -75,12 +75,33 @@ op = predChar $ flip elem "+-*/"
 space :: Parser Char
 space = predChar isSpace
 
--- E -> O N N
+-- Prefix LL -------------------------------------------------------------------
+--
+--   E -> O N N
+
 prefix :: Parser String
-prefix = do o <- op
-            some space
-            l <- prefix
-            some space
-            r <- prefix
-            return ("(" ++ l ++ " " ++ [o] ++ " " ++ r ++ ")")
-          <|> num
+prefix =
+  do o <- op
+     some space
+     l <- prefix
+     some space
+     r <- prefix
+     return ("(" ++ l ++ " " ++ [o] ++ " " ++ r ++ ")")
+   <|> num
+
+-- Postfix RR ------------------------------------------------------------------
+--
+-- E -> N N O
+
+postfix :: Parser String
+postfix = P (\inp -> parse postfix' (reverse inp))
+
+postfix' :: Parser String
+postfix' =
+  do o <- op
+     some space
+     r <- postfix'
+     some space
+     l <- postfix'
+     return ("(" ++ l ++ " " ++ [o] ++ " " ++ r ++ ")")
+   <|> num
