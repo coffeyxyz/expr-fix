@@ -79,29 +79,66 @@ space = predChar isSpace
 --
 --   E -> O N N
 
-prefix :: Parser String
-prefix =
+preE :: Parser String
+preE =
   do o <- op
      some space
-     l <- prefix
+     l <- preE
      some space
-     r <- prefix
+     r <- preE
      return ("(" ++ l ++ " " ++ [o] ++ " " ++ r ++ ")")
    <|> num
 
 -- Postfix RR ------------------------------------------------------------------
 --
--- E -> N N O
+--   E -> N N O
 
-postfix :: Parser String
-postfix = P (\inp -> parse postfix' (reverse inp))
+postE :: Parser String
+postE = P (\inp -> parse postE' $ reverse inp)
 
-postfix' :: Parser String
-postfix' =
+postE' :: Parser String
+postE' =
   do o <- op
      some space
-     r <- postfix'
+     r <- postE'
      some space
-     l <- postfix'
+     l <- postE'
      return ("(" ++ l ++ " " ++ [o] ++ " " ++ r ++ ")")
+   <|> num
+
+-- Infix RR --------------------------------------------------------------------
+--
+--   E -> T | E [+,-] T
+--   T -> P | T [*,/] P
+--   P -> N | ( E )
+
+inE :: Parser String
+inE = P (\inp -> parse inE' $ reverse inp)
+
+inE' :: Parser String
+inE' =
+  do t <- inT
+     many space
+     o <- predChar $ flip elem "+-"
+     many space
+     e <- inE'
+     return ("(" ++ e ++ " " ++ [o] ++ " " ++ t ++ ")")
+   <|> inT
+
+inT :: Parser String
+inT =
+  do p <- inP
+     many space
+     o <- predChar $ flip elem "*/"
+     many space
+     t <- inT
+     return ("(" ++ t ++ " " ++ [o] ++ " " ++ p ++ ")")
+   <|> inP
+
+inP :: Parser String
+inP =
+  do char ')'
+     e <- inE'
+     char '('
+     return e
    <|> num
