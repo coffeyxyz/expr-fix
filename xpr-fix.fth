@@ -10,8 +10,9 @@ true  constant t
 false constant f
 : not   0= ;
 
-: #nip ( x0 ... xu u -- xu )   0 do nip loop ;
-: #over   0 do over loop ;
+: plural   create , does> @ { xt } 0 do xt execute loop ;
+' nip plural #nip
+' over plural #over
 
 : error ( str -- )   ." error: " type clearstack quit ;
 
