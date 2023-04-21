@@ -1,10 +1,17 @@
+#! /usr/bin/env gforth
+
 \ xpr-fix.fth - xpr-fix in GForth
+\
+\ USAGE: ./xpr-fix.fth FIX XPR
+\   - FIX: prefix, postfix, infix
 \
 \ Each syntactic element of an expression must be blank-delimited. That is, each
 \ number, operator, and parenthesis must be separated by blanks.
 \
 \ Copyright (C) 2023 Robert Coffey
 \ Released under the MIT license.
+
+false warnings !
 
 \ UTILITY ----------------------------------------------------------------------
 
@@ -44,7 +51,7 @@
 
 \ misc
 : 0exit   postpone 0= postpone if postpone exit postpone then ; immediate
-: error ( str -- )   cr ." error: " type clearstack quit ;
+: error ( str -- )   ." error: " type cr clearstack bye ;
 
 \ TOKEN ------------------------------------------------------------------------
 
@@ -84,11 +91,12 @@ variable tok-cnt
 : s/rp?   { a u } u 1 <> if false else a c@ ')' = then ;
 : parse-word ( word -- data type )
   { adr u }
-  adr u s/op?         if adr c@ tok-op                   else
-  adr u s/lp?         if adr c@ tok-lp                   else
-  adr u s/rp?         if adr c@ tok-rp                   else
-  adr u s>number? nip if tok-num                         else drop
-                         s" failed to parse token" error then then then then ;
+  adr u s/op?         if adr c@ tok-op else
+  adr u s/lp?         if adr c@ tok-lp else
+  adr u s/rp?         if adr c@ tok-rp else
+  adr u s>number? nip if tok-num       else drop
+                         s\" failed to parse token\nnote: tokens must be blank-delimited"
+                         error then then then then ;
 
 : (next-word?) ( str len -- str data type )
   { adr u len }
@@ -229,3 +237,15 @@ defer inf-T
 : infix   reverse-tok-arr  inf-E  reverse-tok-arr ;
 
 \ e.g. s" 1 - 1 - 1" parse infix
+
+\ main -------------------------------------------------------------------------
+
+: main
+  next-arg { a u }
+  a u s" prefix" str=  if ['] prefix                 else
+  a u s" postfix" str= if ['] postfix                else
+  a u s" infix" str=   if ['] infix                  else
+                          s" unknown notation" error then then then
+  { fix } next-arg parse  fix execute  .ast cr ;
+
+main bye
